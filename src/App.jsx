@@ -94,6 +94,11 @@ const makeShipSvg = (name) => {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
+const getStarshipImageUrl = (id) => {
+  if (!id) return ''
+  return `https://starwars-visualguide.com/assets/img/starships/${id}.jpg`
+}
+
 const StarshipList = () => {
   const {
     items,
@@ -181,9 +186,13 @@ const StarshipList = () => {
             >
               <img
                 className="ship-image"
-                src={makeShipSvg(ship.name)}
+                src={getStarshipImageUrl(shipId)}
                 alt={`${ship.name} görseli`}
                 loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.onerror = null
+                  event.currentTarget.src = makeShipSvg(ship.name)
+                }}
               />
               <div className="card-body">
                 <div>
