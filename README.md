@@ -11,7 +11,9 @@ SWAPI kullanarak yıldız gemilerini listeleyen, arama yapan ve detay sayfasına
 
 ## Kullanılan Kaynaklar
 - Veri kaynağı: SWAPI (`https://swapi.dev`)
-- Görseller: Wikipedia REST API özet görselleri (`https://en.wikipedia.org/api/rest_v1/page/summary/`)
+- Görseller: Wookieepedia (Fandom) `Category:Starships` (MediaWiki PageImages API)
+- Ek görseller: StarWars.com Databank (`https://www.starwars.com/databank`)
+- Görsel yedeği: Pixabay (`https://pixabay.com`)
 
 ## Kurulum
 ```bash
