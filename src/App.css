@@ -218,6 +218,21 @@ button:disabled {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.detail-image {
+  grid-column: 1 / -1;
+  background: rgba(12, 15, 28, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.detail-image img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
 .detail-card {
   padding: 18px;
   border-radius: 16px;
@@ -241,6 +256,16 @@ button:disabled {
 @media (min-width: 900px) {
   .hero {
     text-align: center;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1.4fr repeat(2, minmax(200px, 1fr));
+    align-items: stretch;
+  }
+
+  .detail-image {
+    grid-column: auto;
+    grid-row: span 3;
   }
 }
 

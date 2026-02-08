@@ -3,6 +3,7 @@ import { Link, Route, Routes, useParams } from 'react-router-dom'
 import './App.css'
 
 const API_BASE = 'https://swapi.dev/api'
+const WIKI_SUMMARY_BASE = 'https://en.wikipedia.org/api/rest_v1/page/summary/'
 
 const formatValue = (value) => {
   if (!value || value === 'unknown' || value === 'n/a') {
@@ -94,9 +95,25 @@ const makeShipSvg = (name) => {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
-const getStarshipImageUrl = (id) => {
-  if (!id) return ''
-  return `https://starwars-visualguide.com/assets/img/starships/${id}.jpg`
+const fetchWikiImage = async (title) => {
+  try {
+    const response = await fetch(`${WIKI_SUMMARY_BASE}${encodeURIComponent(title)}`)
+    if (!response.ok) return ''
+    const data = await response.json()
+    return data.thumbnail?.source || data.originalimage?.source || ''
+  } catch (err) {
+    return ''
+  }
+}
+
+const getWikiImageForName = async (name) => {
+  if (!name) return ''
+  const candidates = [name, `${name} (Star Wars)`]
+  for (const title of candidates) {
+    const image = await fetchWikiImage(title)
+    if (image) return image
+  }
+  return ''
 }
 
 const StarshipList = () => {
@@ -110,10 +127,40 @@ const StarshipList = () => {
   } = useFetch(`${API_BASE}/starships/`)
   const [query, setQuery] = useState('')
   const [activeQuery, setActiveQuery] = useState('')
+  const [imageMap, setImageMap] = useState({})
 
   useEffect(() => {
     loadPage(`${API_BASE}/starships/`)
   }, [loadPage])
+
+  useEffect(() => {
+    let isActive = true
+    const loadImages = async () => {
+      const missing = items.filter((ship) => !imageMap[ship.url])
+      if (missing.length === 0) return
+
+      const results = await Promise.all(
+        missing.map(async (ship) => ({
+          key: ship.url,
+          image: await getWikiImageForName(ship.name),
+        })),
+      )
+
+      if (!isActive) return
+      setImageMap((prev) => {
+        const next = { ...prev }
+        results.forEach((entry) => {
+          next[entry.key] = entry.image
+        })
+        return next
+      })
+    }
+
+    loadImages()
+    return () => {
+      isActive = false
+    }
+  }, [items, imageMap])
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -178,6 +225,7 @@ const StarshipList = () => {
       <section className="grid">
         {items.map((ship) => {
           const shipId = getStarshipId(ship.url)
+          const imageSrc = imageMap[ship.url] || makeShipSvg(ship.name)
           return (
             <Link
               key={ship.url}
@@ -186,7 +234,7 @@ const StarshipList = () => {
             >
               <img
                 className="ship-image"
-                src={getStarshipImageUrl(shipId)}
+                src={imageSrc}
                 alt={`${ship.name} görseli`}
                 loading="lazy"
                 onError={(event) => {
@@ -235,6 +283,7 @@ const StarshipDetail = () => {
   const [starship, setStarship] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [detailImage, setDetailImage] = useState('')
 
   useEffect(() => {
     const loadDetail = async () => {
@@ -247,6 +296,8 @@ const StarshipDetail = () => {
         }
         const data = await response.json()
         setStarship(data)
+        const image = await getWikiImageForName(data.name)
+        setDetailImage(image)
       } catch (err) {
         setError('Detaylar alınamadı. Lütfen tekrar deneyin.')
       } finally {
@@ -276,6 +327,17 @@ const StarshipDetail = () => {
 
       {starship && (
         <section className="detail-grid">
+          <div className="detail-image">
+            <img
+              src={detailImage || makeShipSvg(starship.name)}
+              alt={`${starship.name} görseli`}
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.onerror = null
+                event.currentTarget.src = makeShipSvg(starship.name)
+              }}
+            />
+          </div>
           <div className="detail-card">
             <h3>Üretici</h3>
             <p>{formatValue(starship.manufacturer)}</p>
