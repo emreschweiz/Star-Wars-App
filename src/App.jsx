@@ -55,6 +55,45 @@ const useFetch = (initialUrl) => {
   }
 }
 
+const hashString = (value) => {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+const makeShipSvg = (name) => {
+  const base = hashString(name || 'ship')
+  const hue = base % 360
+  const accent = `hsl(${hue}, 70%, 65%)`
+  const accentDark = `hsl(${(hue + 24) % 360}, 50%, 30%)`
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${accentDark}"/>
+          <stop offset="100%" stop-color="#0b0c12"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="0.2" cy="0.1" r="0.8">
+          <stop offset="0%" stop-color="${accent}" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="${accent}" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="640" height="360" rx="24" fill="url(#g)"/>
+      <rect width="640" height="360" rx="24" fill="url(#glow)"/>
+      <g transform="translate(100 120)" fill="#e6e7f0">
+        <path d="M60 30c40-30 160-40 260-10 30 9 60 27 80 46 12 12 20 30 20 44 0 18-10 36-26 46-36 22-96 30-178 22-70-7-134-28-170-48-24-14-34-32-34-47 0-19 16-39 48-53z" opacity="0.92"/>
+        <path d="M120 70h100c20 0 40 8 52 18l24 18-32 16H140l-24-14c-8-5-12-12-12-18 0-11 8-20 16-20z" fill="#cfd3e6"/>
+        <circle cx="300" cy="96" r="18" fill="${accent}"/>
+        <rect x="40" y="96" width="60" height="18" rx="9" fill="${accent}"/>
+      </g>
+    </svg>
+  `
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
 const StarshipList = () => {
   const {
     items,
@@ -100,21 +139,21 @@ const StarshipList = () => {
       <header className="hero">
         <div>
           <p className="eyebrow">SWAPI Explorer</p>
-          <h1>Yıldız Gemileri Arşivi</h1>
+          <h1 className="logo-title">STAR WARS</h1>
           <p className="subtitle">{summaryLabel}</p>
         </div>
         <form className="search" onSubmit={handleSubmit}>
-          <label htmlFor="searchInput">Ad veya model ara</label>
+          <label htmlFor="searchInput">Name / Model</label>
           <div className="search-row">
             <input
               id="searchInput"
               type="search"
-              placeholder="Millennium Falcon, Star Destroyer..."
+              placeholder="Name / Model"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
             <button type="submit" disabled={loading}>
-              Ara
+              Filter
             </button>
             <button
               type="button"
@@ -140,18 +179,26 @@ const StarshipList = () => {
               to={shipId ? `/starships/${shipId}` : '/'}
               className="card"
             >
-              <div>
-                <h2>{ship.name}</h2>
-                <p className="meta">{ship.model}</p>
-              </div>
-              <div className="stats">
+              <img
+                className="ship-image"
+                src={makeShipSvg(ship.name)}
+                alt={`${ship.name} görseli`}
+                loading="lazy"
+              />
+              <div className="card-body">
                 <div>
-                  <span>Max hız</span>
-                  <strong>{formatValue(ship.max_atmosphering_speed)}</strong>
+                  <h2>{ship.name}</h2>
+                  <p className="meta">Model: {ship.model}</p>
                 </div>
-                <div>
-                  <span>Mürettebat</span>
-                  <strong>{formatValue(ship.crew)}</strong>
+                <div className="stats">
+                  <div>
+                    <span>Max hız</span>
+                    <strong>{formatValue(ship.max_atmosphering_speed)}</strong>
+                  </div>
+                  <div>
+                    <span>Mürettebat</span>
+                    <strong>{formatValue(ship.crew)}</strong>
+                  </div>
                 </div>
               </div>
             </Link>
